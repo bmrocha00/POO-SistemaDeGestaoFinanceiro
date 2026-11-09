@@ -8,14 +8,10 @@ Usa o GestorFinanceiro (Integrante 3):
     listar_lancamentos()                  filtrar_por_categoria(nome)
     gerar_relatorio_mensal(ano, mes)      -> dict
 """
-import os
 import sys
 from datetime import date
 
-from database.gerenciador_arquivos import GerenciadorArquivos, ErroPersistencia
-from models import Receita, Despesa, LancamentoError, criar_lancamento
-
-PASTA_DADOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+from models import Receita, Despesa, LancamentoError
 
 MENU = """
 ========== GESTÃO FINANCEIRA ==========
@@ -31,61 +27,15 @@ MENU = """
 
 
 # ---------------------------------------------------------------------------
-# Integração: gestor (Integrante 3) + persistência TXT (Integrante 2).
-# O GestorFinanceiro guarda tudo em memória; o GestorPersistente carrega os
-# dados do TXT ao iniciar e grava cada alteração depois que o gestor a valida.
+# Integração: ÚNICO lugar que sabe como o gestor é criado.
+# A persistência em TXT é responsabilidade do GestorFinanceiro (Integrante 3);
+# quando ele entregar a versão com GerenciadorArquivos, ajuste só esta função
+# (ex.: return GestorFinanceiro(GerenciadorArquivos())).
 # ---------------------------------------------------------------------------
-class GestorPersistente:
-    """Envolve o GestorFinanceiro e espelha cada alteração nos arquivos TXT."""
-
-    def __init__(self, gestor, arquivos):
-        self._gestor = gestor
-        self._arquivos = arquivos
-        self.avisos = []
-        self._carregar()
-
-    def _carregar(self):
-        for reg in self._arquivos.carregar_lancamentos():
-            try:
-                lanc = criar_lancamento(reg["tipo"], reg["descricao"], reg["valor"],
-                                        reg["data"], reg["categoria"], id=reg["id"])
-                self._gestor.cadastrar_lancamento(lanc)
-            except ValueError as erro:
-                self.avisos.append(f"Registro {reg['id']} ignorado: {erro}")
-        self.avisos = list(self._arquivos.avisos) + self.avisos
-
-    def cadastrar_lancamento(self, lanc):
-        self._gestor.cadastrar_lancamento(lanc)
-        try:
-            self._arquivos.salvar_lancamento(lanc.to_dict())
-            self._arquivos.salvar_categoria(lanc.categoria)
-        except Exception:
-            self._gestor.remover_lancamento(lanc.id)  # memória e arquivo não divergem
-            raise
-        return lanc
-
-    def editar_lancamento(self, id_, **alteracoes):
-        lanc = self._gestor.editar_lancamento(id_, **alteracoes)
-        dados = lanc.to_dict()
-        dados.pop("id")
-        self._arquivos.atualizar_lancamento(id_, dados)
-        if "categoria" in alteracoes:
-            self._arquivos.salvar_categoria(lanc.categoria)
-        return lanc
-
-    def remover_lancamento(self, id_):
-        lanc = self._gestor.remover_lancamento(id_)
-        self._arquivos.excluir_lancamento(id_)
-        return lanc
-
-    def __getattr__(self, nome):  # listar, saldo, filtros e relatório vão direto
-        return getattr(self._gestor, nome)
-
-
-def criar_gestor(pasta=PASTA_DADOS):
+def criar_gestor():
     from services.gestor_financeiro import GestorFinanceiro
 
-    return GestorPersistente(GestorFinanceiro(), GerenciadorArquivos(pasta))
+    return GestorFinanceiro()
 
 
 # ---------------------------------------------------------------------------
@@ -274,7 +224,7 @@ def executar(gestor):
             return
         except ValueError as erro:  # inclui LancamentoError
             print(f"Erro: {erro}")
-        except (OSError, ErroPersistencia) as erro:
+        except OSError as erro:
             print(f"Erro de arquivo: {erro}")
         except Exception as erro:  # rede de segurança: o menu não pode cair
             print(f"Erro inesperado ({type(erro).__name__}): {erro}")
@@ -286,8 +236,6 @@ def main():
     except Exception as erro:
         print(f"Não foi possível iniciar o sistema: {erro}")
         sys.exit(1)
-    for aviso in gestor.avisos:
-        print(f"Aviso: {aviso}")
     print("Sistema iniciado.")
     executar(gestor)
 
