@@ -1,6 +1,7 @@
 
 import unittest
-
+import tempfile
+from database.gerenciador_arquivos import GerenciadorArquivos
 from models import Receita, Despesa
 from services.gestor_financeiro import GestorFinanceiro
 
@@ -123,6 +124,53 @@ class TestGestorFinanceiro(unittest.TestCase):
     def test_relatorio_mes_invalido(self):
         with self.assertRaises(ValueError):
             self.gestor.gerar_relatorio_mensal(2026, 13)
+    
+    def test_persistencia_completa(self):
+        """Testa cadastro, carregamento, edição e exclusão no TXT."""
+
+        with tempfile.TemporaryDirectory() as pasta:
+
+            arquivos = GerenciadorArquivos(pasta)
+            gestor = GestorFinanceiro(arquivos)
+
+            receita = Receita(
+                "Salário", 3000, "2026-11-01", "Trabalho"
+            )
+
+            gestor.cadastrar_lancamento(receita)
+
+            # Verifica se os dados foram salvos
+            novo_gestor = GestorFinanceiro(
+                GerenciadorArquivos(pasta)
+            )
+
+            self.assertEqual(
+                novo_gestor.calcular_saldo(), 3000
+            )
+
+            # Edita a receita
+            novo_gestor.editar_lancamento(
+                receita.id, valor=3500
+            )
+
+            outro_gestor = GestorFinanceiro(
+                GerenciadorArquivos(pasta)
+            )
+
+            self.assertEqual(
+                outro_gestor.calcular_saldo(), 3500
+            )
+
+            # Exclui a receita
+            outro_gestor.remover_lancamento(receita.id)
+
+            ultimo_gestor = GestorFinanceiro(
+                GerenciadorArquivos(pasta)
+            )
+
+            self.assertEqual(
+                ultimo_gestor.listar_lancamentos(), []
+            )
 
 
 

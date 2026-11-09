@@ -1,26 +1,58 @@
-
-from models import Lancamento
+from models import Lancamento, criar_lancamento
 from datetime import date, datetime
 
 
 class GestorFinanceiro:
     """Gerencia as movimentações financeiras."""
+    def __init__(self, gerenciador=None):
+        """Inicializa o gestor e carrega os lançamentos salvos."""
 
-    def __init__(self):
         self._lancamentos = []
         self._proximo_id = 1
+        self._gerenciador = gerenciador
+
+        if self._gerenciador is not None:
+            registros = self._gerenciador.carregar_lancamentos()
+
+            for registro in registros:
+                lancamento = criar_lancamento(
+                    registro["tipo"],
+                    registro["descricao"],
+                    registro["valor"],
+                    registro["data"],
+                    registro["categoria"],
+                    id=registro["id"]
+                )
+
+                self._lancamentos.append(lancamento)
+
+            self._proximo_id = max(
+                (l.id for l in self._lancamentos),
+                default=0
+            ) + 1
 
     def cadastrar_lancamento(self, lancamento):
-        """Cadastra uma receita ou despesa."""
+        """Cadastra e salva uma movimentação."""
 
         if not isinstance(lancamento, Lancamento):
             raise TypeError("O objeto deve ser um lançamento.")
 
+        id_anterior = lancamento.id
+
         if lancamento.id is None:
             lancamento.id = self._proximo_id
 
-        elif any(l.id == lancamento.id for l in self._lancamentos):
+        if any(l.id == lancamento.id for l in self._lancamentos):
             raise ValueError("Já existe um lançamento com esse ID.")
+
+        try:
+            if self._gerenciador is not None:
+                self._gerenciador.salvar_lancamento(
+                    lancamento.to_dict()
+                )
+        except Exception:
+            lancamento.id = id_anterior
+            raise
 
         self._lancamentos.append(lancamento)
 
@@ -45,19 +77,33 @@ class GestorFinanceiro:
         return round(saldo, 2)
     
     def remover_lancamento(self, id_lancamento):
-        """Remove um lançamento pelo ID."""
+        """Remove um lançamento da memória e do TXT."""
 
         for lancamento in self._lancamentos:
+
             if lancamento.id == id_lancamento:
+
+                if self._gerenciador is not None:
+                    removido = self._gerenciador.excluir_lancamento(
+                        id_lancamento
+                    )
+
+                    if not removido:
+                        raise ValueError(
+                            "Lançamento não encontrado no TXT."
+                        )
+
                 self._lancamentos.remove(lancamento)
                 return lancamento
 
         raise ValueError("Lançamento não encontrado.")
     
     def editar_lancamento(self, id_lancamento, **alteracoes):
-        """Edita os dados de um lançamento existente."""
+        """Edita um lançamento na memória e no TXT."""
 
-        campos_permitidos = {"descricao", "valor", "data", "categoria"}
+        campos_permitidos = {
+            "descricao", "valor", "data", "categoria"
+        }
 
         if not alteracoes:
             raise ValueError("Nenhuma alteração informada.")
@@ -66,6 +112,7 @@ class GestorFinanceiro:
             raise ValueError("Campo de edição inválido.")
 
         for lancamento in self._lancamentos:
+
             if lancamento.id == id_lancamento:
 
                 antigos = {
@@ -77,7 +124,26 @@ class GestorFinanceiro:
                     for campo, novo_valor in alteracoes.items():
                         setattr(lancamento, campo, novo_valor)
 
-                except (ValueError, TypeError):
+                    if self._gerenciador is not None:
+
+                        dados = lancamento.to_dict()
+
+                        novos_dados = {
+                            campo: dados[campo]
+                            for campo in alteracoes
+                        }
+
+                        atualizado = self._gerenciador.atualizar_lancamento(
+                            id_lancamento,
+                            novos_dados
+                        )
+
+                        if not atualizado:
+                            raise ValueError(
+                                "Lançamento não encontrado no TXT."
+                            )
+
+                except Exception:
                     for campo, valor_antigo in antigos.items():
                         setattr(lancamento, campo, valor_antigo)
                     raise
