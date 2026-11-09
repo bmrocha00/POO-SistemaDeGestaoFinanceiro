@@ -8,10 +8,15 @@ Usa o GestorFinanceiro (Integrante 3):
     listar_lancamentos()                  filtrar_por_categoria(nome)
     gerar_relatorio_mensal(ano, mes)      -> dict
 """
+import os
 import sys
 from datetime import date
 
+from database.gerenciador_arquivos import ErroPersistencia
 from models import Receita, Despesa, LancamentoError
+
+# Sempre ao lado do main.py, não importa de onde o programa seja executado.
+PASTA_DADOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 MENU = """
 ========== GESTÃO FINANCEIRA ==========
@@ -28,14 +33,14 @@ MENU = """
 
 # ---------------------------------------------------------------------------
 # Integração: ÚNICO lugar que sabe como o gestor é criado.
-# A persistência em TXT é responsabilidade do GestorFinanceiro (Integrante 3);
-# quando ele entregar a versão com GerenciadorArquivos, ajuste só esta função
-# (ex.: return GestorFinanceiro(GerenciadorArquivos())).
+# O GestorFinanceiro (Integrante 3) usa o GerenciadorArquivos (Integrante 2)
+# para carregar os dados ao iniciar e gravar cada alteração no TXT.
 # ---------------------------------------------------------------------------
-def criar_gestor():
+def criar_gestor(pasta=PASTA_DADOS):
+    from database.gerenciador_arquivos import GerenciadorArquivos
     from services.gestor_financeiro import GestorFinanceiro
 
-    return GestorFinanceiro()
+    return GestorFinanceiro(GerenciadorArquivos(pasta))
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +229,7 @@ def executar(gestor):
             return
         except ValueError as erro:  # inclui LancamentoError
             print(f"Erro: {erro}")
-        except OSError as erro:
+        except (OSError, ErroPersistencia) as erro:
             print(f"Erro de arquivo: {erro}")
         except Exception as erro:  # rede de segurança: o menu não pode cair
             print(f"Erro inesperado ({type(erro).__name__}): {erro}")
