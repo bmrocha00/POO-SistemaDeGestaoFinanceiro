@@ -1,1 +1,5 @@
 1;Receita;0;144.00;2025-12-25;4
+2;Receita;presente;1000.00;2020-12-20;Presente
+3;Despesa;GTA VI;550.00;2026-11-10;Jogo
+4;Receita;das;1042.00;2026-11-10;foda
+5;Receita;pofra;1000.08;1909-02-10;salario

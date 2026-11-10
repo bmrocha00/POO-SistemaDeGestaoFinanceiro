@@ -7,6 +7,7 @@ class Receita(Lancamento):
 
     @property
     def tipo(self):
+        """Nome do tipo, usado na persistência."""
         return "Receita"
 
     def calcular_impacto(self):

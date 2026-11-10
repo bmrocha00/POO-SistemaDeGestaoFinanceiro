@@ -37,6 +37,7 @@ MENU = """
 # para carregar os dados ao iniciar e gravar cada alteração no TXT.
 # ---------------------------------------------------------------------------
 def criar_gestor(pasta=PASTA_DADOS):
+    """Cria o GestorFinanceiro ligado ao GerenciadorArquivos (carrega o TXT ao iniciar)."""
     from database.gerenciador_arquivos import GerenciadorArquivos
     from services.gestor_financeiro import GestorFinanceiro
 
@@ -73,6 +74,7 @@ def ler_campo(mensagem, campo, opcional=False, padrao=None):
 
 
 def ler_inteiro(mensagem, minimo=None, maximo=None):
+    """Pergunta até receber um número inteiro dentro dos limites (minimo e maximo são opcionais)."""
     while True:
         texto = input(mensagem).strip()
         try:
@@ -89,10 +91,12 @@ def ler_inteiro(mensagem, minimo=None, maximo=None):
 
 
 def _moeda(valor):
+    """Formata um número como moeda, por exemplo: R$ 150.50."""
     return f"R$ {valor:.2f}"
 
 
 def _buscar(gestor, id_):
+    """Retorna o lançamento com o ID informado, ou None se não existir."""
     for lanc in gestor.listar_lancamentos():
         if lanc.id == id_:
             return lanc
@@ -103,6 +107,7 @@ def _buscar(gestor, id_):
 # Ações do menu
 # ---------------------------------------------------------------------------
 def cadastrar(gestor, classe):
+    """Lê os dados no terminal e cadastra uma Receita ou Despesa (conforme a classe recebida)."""
     print(f"\n--- Cadastrar {classe.__name__.lower()} ---")
     descricao = ler_campo("Descrição: ", "descricao")
     valor = ler_campo("Valor (ex.: 150,50): ", "valor")
@@ -114,6 +119,7 @@ def cadastrar(gestor, classe):
 
 
 def mostrar(lancamentos):
+    """Imprime os lançamentos recebidos e o impacto total deles no saldo."""
     if not lancamentos:
         print("Nenhuma movimentação encontrada.")
         return
@@ -124,6 +130,7 @@ def mostrar(lancamentos):
 
 
 def listar(gestor):
+    """Opção 3 do menu: lista todas as movimentações ou filtra por categoria."""
     print("\n--- Listar movimentações ---")
     print("1 - Todas\n2 - Filtrar por categoria")
     if ler_inteiro("Opção: ", 1, 2) == 2:
@@ -134,6 +141,7 @@ def listar(gestor):
 
 
 def editar(gestor):
+    """Opção 4 do menu: altera os campos de uma movimentação (Enter mantém o valor atual)."""
     print("\n--- Editar movimentação ---")
     id_ = ler_inteiro("ID da movimentação: ", 0)
     atual = _buscar(gestor, id_)
@@ -161,6 +169,7 @@ def editar(gestor):
 
 
 def excluir(gestor):
+    """Opção 5 do menu: exclui uma movimentação após pedir confirmação."""
     print("\n--- Excluir movimentação ---")
     id_ = ler_inteiro("ID da movimentação: ", 0)
     atual = _buscar(gestor, id_)
@@ -176,10 +185,12 @@ def excluir(gestor):
 
 
 def consultar_saldo(gestor):
+    """Opção 6 do menu: mostra o saldo atual (receitas menos despesas)."""
     print(f"\nSaldo atual: {_moeda(gestor.calcular_saldo())}")
 
 
 def relatorio(gestor):
+    """Opção 7 do menu: mostra o relatório financeiro de um mês."""
     print("\n--- Relatório mensal ---")
     ano = ler_inteiro("Ano (ex.: 2026): ", 1, 9999)
     mes = ler_inteiro("Mês (1-12): ", 1, 12)
@@ -209,6 +220,7 @@ ACOES = {
 # Laço principal
 # ---------------------------------------------------------------------------
 def executar(gestor):
+    """Laço principal: mostra o menu e executa a ação escolhida até o usuário sair (erros são tratados aqui)."""
     while True:
         print(MENU)
         try:
@@ -233,6 +245,7 @@ def executar(gestor):
 
 
 def main():
+    """Ponto de entrada: cria o gestor e inicia o menu."""
     try:
         gestor = criar_gestor()
     except Exception as erro:

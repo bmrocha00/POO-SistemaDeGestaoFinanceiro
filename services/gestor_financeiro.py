@@ -1,3 +1,4 @@
+"""Classe GestorFinanceiro: regras de negócio (cadastro, saldo, filtros e relatórios)."""
 from models import Lancamento, criar_lancamento
 from datetime import date, datetime
 
@@ -7,9 +8,9 @@ class GestorFinanceiro:
     def __init__(self, gerenciador=None):
         """Inicializa o gestor e carrega os lançamentos salvos."""
 
-        self._lancamentos = []
-        self._proximo_id = 1
-        self._gerenciador = gerenciador
+        self._lancamentos = []             # lançamentos em memória (objetos Receita/Despesa)
+        self._proximo_id = 1               # próximo id livre para novos lançamentos
+        self._gerenciador = gerenciador    # GerenciadorArquivos usado para salvar no TXT (opcional)
 
         if self._gerenciador is not None:
             registros = self._gerenciador.carregar_lancamentos()
@@ -168,6 +169,7 @@ class GestorFinanceiro:
         """Retorna os lançamentos dentro de um período."""
 
         def converter_data(valor):
+            """Converte None, date, datetime ou texto AAAA-MM-DD em date (ValueError se inválida)."""
             if valor is None:
                 return None
 
@@ -234,6 +236,3 @@ class GestorFinanceiro:
             "saldo": round(saldo, 2),
             "quantidade_lancamentos": quantidade
         }
-
-
-

@@ -27,23 +27,26 @@ class Lancamento(ABC):
     calcular_impacto(), implementado em cada subclasse.
     """
 
-    FORMATO_DATA = "%Y-%m-%d"
+    FORMATO_DATA = "%Y-%m-%d"  # formato aceito e gravado para as datas (AAAA-MM-DD)
 
     def __init__(self, descricao, valor, data, categoria, id=None):
-        self._id = None
-        self.id = id
-        self.descricao = descricao
-        self.valor = valor
-        self.data = data
-        self.categoria = categoria
+        """Cria o lançamento validando cada campo pelos setters (o id é opcional)."""
+        self._id = None              # identificador (definido pelo setter abaixo)
+        self.id = id                 # id do lançamento; None até ser cadastrado
+        self.descricao = descricao   # texto que descreve a movimentação
+        self.valor = valor           # valor positivo; o sinal vem de calcular_impacto()
+        self.data = data             # data da movimentação (objeto date)
+        self.categoria = categoria   # nome da categoria (ex.: Alimentacao)
 
     # ---------- id ----------
     @property
     def id(self):
+        """Identificador do lançamento (None até ser cadastrado)."""
         return self._id
 
     @id.setter
     def id(self, novo_id):
+        """Define o id (inteiro não negativo ou None)."""
         if novo_id is None:
             self._id = None
             return
@@ -58,10 +61,12 @@ class Lancamento(ABC):
     # ---------- descricao ----------
     @property
     def descricao(self):
+        """Descrição do lançamento."""
         return self._descricao
 
     @descricao.setter
     def descricao(self, nova):
+        """Define a descrição (texto não vazio)."""
         if not isinstance(nova, str) or not nova.strip():
             raise DescricaoInvalidaError("A descrição não pode ser vazia.")
         self._descricao = nova.strip()
@@ -69,10 +74,12 @@ class Lancamento(ABC):
     # ---------- valor ----------
     @property
     def valor(self):
+        """Valor do lançamento (sempre positivo, com 2 casas decimais)."""
         return self._valor
 
     @valor.setter
     def valor(self, novo):
+        """Define o valor (aceita vírgula; deve ser maior que zero)."""
         if isinstance(novo, bool):
             raise ValorInvalidoError("Valor inválido.")
         if isinstance(novo, str):
@@ -90,10 +97,12 @@ class Lancamento(ABC):
     # ---------- data ----------
     @property
     def data(self):
+        """Data do lançamento (objeto date)."""
         return self._data
 
     @data.setter
     def data(self, nova):
+        """Define a data (objeto date ou texto no formato AAAA-MM-DD)."""
         if isinstance(nova, datetime):
             nova = nova.date()
         if isinstance(nova, date):
@@ -111,10 +120,12 @@ class Lancamento(ABC):
     # ---------- categoria ----------
     @property
     def categoria(self):
+        """Nome da categoria do lançamento."""
         return self._categoria
 
     @categoria.setter
     def categoria(self, nova):
+        """Define a categoria (texto ou objeto Categoria; não pode ser vazia)."""
         nova = str(getattr(nova, "nome", nova)).strip()
         if not nova:
             raise DescricaoInvalidaError("A categoria não pode ser vazia.")
@@ -143,12 +154,14 @@ class Lancamento(ABC):
         }
 
     def __str__(self):
+        """Texto de exibição: [id] data | tipo | descrição (categoria) | valor."""
         return (
             f"[{self.id}] {self.data.strftime('%d/%m/%Y')} | {self.tipo:<7} | "
             f"{self.descricao} ({self.categoria}) | R$ {self.valor:.2f}"
         )
 
     def __repr__(self):
+        """Representação técnica do objeto, útil para depuração."""
         return (
             f"{type(self).__name__}(id={self.id!r}, descricao={self.descricao!r}, "
             f"valor={self.valor!r}, data={self.data.isoformat()!r}, "
@@ -156,6 +169,7 @@ class Lancamento(ABC):
         )
 
     def __eq__(self, outro):
+        """Dois lançamentos são iguais quando todos os campos (to_dict) são iguais."""
         if not isinstance(outro, Lancamento):
             return NotImplemented
         return self.to_dict() == outro.to_dict()

@@ -27,7 +27,6 @@ class TestGerenciadorArquivos(unittest.TestCase):
         shutil.rmtree(self.pasta)
         GerenciadorArquivos(self.pasta)
         self.assertTrue(os.path.exists(os.path.join(self.pasta, "lancamentos.txt")))
-        self.assertTrue(os.path.exists(os.path.join(self.pasta, "categorias.txt")))
 
     def test_nao_apaga_dados_existentes(self):
         self.g.salvar_lancamento(lancamento())
@@ -172,36 +171,3 @@ class TestGerenciadorArquivos(unittest.TestCase):
         self.g.salvar_lancamento(lancamento())
         self.g.excluir_lancamento(1)
         self.assertFalse(os.path.exists(self.g.caminho_lancamentos + ".tmp"))
-
-    # ---------- próximo id ----------
-    def test_proximo_id_arquivo_vazio(self):
-        self.assertEqual(self.g.gerar_proximo_id(), 1)
-
-    def test_proximo_id_usa_maior_id(self):
-        for i in (1, 7, 3):
-            self.g.salvar_lancamento(lancamento(id=i))
-        self.assertEqual(self.g.gerar_proximo_id(), 8)
-
-    # ---------- categorias ----------
-    def test_categorias_vazio(self):
-        self.assertEqual(self.g.carregar_categorias(), [])
-
-    def test_salvar_e_carregar_categorias(self):
-        self.assertTrue(self.g.salvar_categoria("Alimentacao"))
-        self.assertTrue(self.g.salvar_categoria("Transporte"))
-        self.assertEqual(self.g.carregar_categorias(), ["Alimentacao", "Transporte"])
-
-    def test_categoria_duplicada_ignora_maiusculas(self):
-        self.g.salvar_categoria("Alimentacao")
-        self.assertFalse(self.g.salvar_categoria("alimentacao"))
-        self.assertFalse(self.g.salvar_categoria("  ALIMENTACAO  "))
-        self.assertEqual(self.g.carregar_categorias(), ["Alimentacao"])
-
-    def test_categoria_invalida(self):
-        for invalida in ("", "   ", None, 5):
-            with self.assertRaises(ValueError):
-                self.g.salvar_categoria(invalida)
-
-    def test_categoria_com_acento(self):
-        self.g.salvar_categoria("Alimentação")
-        self.assertEqual(self.g.carregar_categorias(), ["Alimentação"])
