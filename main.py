@@ -110,7 +110,6 @@ def cadastrar(gestor, classe):
                      padrao=date.today().isoformat())
     categoria = ler_campo("Categoria: ", "categoria")
     gestor.cadastrar_lancamento(classe(descricao, valor, data, categoria))
-    salvar(gestor)
     print(f"{classe.__name__} cadastrada com sucesso!")
 
 
@@ -158,7 +157,6 @@ def editar(gestor):
         print("Nada foi alterado.")
         return
     gestor.editar_lancamento(id_, **novos)
-    salvar(gestor)
     print("Movimentação atualizada!")
 
 
@@ -174,7 +172,6 @@ def excluir(gestor):
         print("Exclusão cancelada.")
         return
     gestor.remover_lancamento(id_)
-    salvar(gestor)
     print("Movimentação excluída!")
 
 

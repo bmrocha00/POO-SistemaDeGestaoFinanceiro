@@ -18,7 +18,9 @@ def rodar(gestor, entradas):
     saida = io.StringIO()
     with patch("builtins.input", side_effect=entradas), redirect_stdout(saida):
         main.executar(gestor)
-    return saida.getvalue()
+    texto = saida.getvalue()
+    assert "Erro inesperado" not in texto, texto  # qualquer bug interno vira falha
+    return texto
 
 
 class TestMenu(unittest.TestCase):
@@ -42,6 +44,13 @@ class TestMenu(unittest.TestCase):
         r = self.g.listar_lancamentos()[0]
         self.assertIsInstance(r, Receita)
         self.assertEqual(r.data, date.today())
+
+    def test_mensagens_de_sucesso(self):
+        saida = rodar(self.g, ["1", "Salario", "3000", "", "Trabalho",
+                               "4", "1", "", "3500", "", "", "5", "1", "s", "0"])
+        self.assertIn("Receita cadastrada com sucesso", saida)
+        self.assertIn("Movimentação atualizada", saida)
+        self.assertIn("Movimentação excluída", saida)
 
     def test_cadastrar_despesa(self):
         rodar(self.g, ["2", "Mercado", "250,50", "2026-11-02", "Alimentacao", "0"])

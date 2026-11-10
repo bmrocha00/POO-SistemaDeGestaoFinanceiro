@@ -18,7 +18,9 @@ def sessao(pasta, entradas):
     saida = io.StringIO()
     with patch("builtins.input", side_effect=entradas), redirect_stdout(saida):
         main.executar(main.criar_gestor(pasta))
-    return saida.getvalue()
+    texto = saida.getvalue()
+    assert "Erro inesperado" not in texto, texto
+    return texto
 
 
 class TestPersistenciaNoMenu(unittest.TestCase):
