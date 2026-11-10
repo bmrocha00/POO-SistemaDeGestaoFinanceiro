@@ -1,6 +1,6 @@
 # Sistema de Gestão Financeira
 
-Sistema de gestão financeira pessoal desenvolvido em Python para a disciplina de Programação Orientada a Objetos (Profa. Luiza Bernardes Real).
+Sistema de gestão financeira pessoal desenvolvido em Python para a disciplina de Programação Orientada a Objetos.
 
 O programa permite registrar receitas e despesas, organizá-las por categoria, consultar, editar e excluir lançamentos, acompanhar o saldo e gerar o relatório de um mês. Os dados são gravados em um arquivo TXT e recarregados sempre que o programa é iniciado, de modo que nada se perde ao fechá-lo.
 
